@@ -1,0 +1,26 @@
+===== SCHEMA REVIEW SUMMARY =====
+Total features: 17
+Numeric features (7): age, balance, campaign, day, duration, pdays, previous
+Categorical/string features (10): contact, default, education, housing, job, loan, marital, month, poutcome, y
+
+Feature details:
+- age: INT; required fraction=1.00; values/example=1-1
+- balance: INT; required fraction=1.00; values/example=1-1
+- campaign: INT; required fraction=1.00; values/example=1-1
+- contact: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['cellular', 'telephone', 'unknown']
+- day: INT; required fraction=1.00; values/example=1-1
+- default: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['no', 'yes']
+- duration: INT; required fraction=1.00; values/example=1-1
+- education: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['primary', 'secondary', 'tertiary', 'unknown']
+- housing: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['no', 'yes']
+- job: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services', 'student', 'technician', 'unemployed', 'unknown']
+- loan: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['no', 'yes']
+- marital: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['divorced', 'married', 'single']
+- month: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['apr', 'aug', 'dec', 'feb', 'jan', 'jul', 'jun', 'mar', 'may', 'nov', 'oct', 'sep']
+- pdays: INT; required fraction=1.00; values/example=1-1
+- poutcome: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['failure', 'other', 'success', 'unknown']
+- previous: INT; required fraction=1.00; values/example=1-1
+- y: BYTES; required fraction=1.00; values/example=1-1; vocabulary=['no', 'yes']
+
+Interpretation:
+The inferred schema contains one scalar value per feature and marks all features as present in the observed training data. Numeric columns were inferred as integers, while categorical columns and the target 'y' were inferred as byte strings with explicit vocabularies. This inferred schema is a useful starting point, but production validation should curate it with intentional numeric ranges and domain rules instead of relying only on constraints learned from the same dataset.
