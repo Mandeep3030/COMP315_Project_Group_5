@@ -1,15 +1,16 @@
 import os
+import glob
 from tfx.components import CsvExampleGen
-from tfx.orchestration.experimental.interactive.interactive_context import InteractiveContext
+from tfx.orchestration import metadata
+from tfx.orchestration import pipeline
+from tfx.orchestration.local.local_dag_runner import LocalDagRunner
 from tfx.proto import example_gen_pb2
 
-PROJECT_DIR = os.path.expanduser("~/COMP315/term_project")
+# Resolve paths relative to this file so renaming or moving the project is safe.
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_DIR, "data")
 PIPELINE_ROOT = os.path.join(PROJECT_DIR, "pipeline_output", "examplegen_test")
-
-context = InteractiveContext(
-    pipeline_root=PIPELINE_ROOT
-)
+METADATA_PATH = os.path.join(PIPELINE_ROOT, "metadata.sqlite")
 
 output_config = example_gen_pb2.Output(
     split_config=example_gen_pb2.SplitConfig(
@@ -31,14 +32,27 @@ example_gen = CsvExampleGen(
     output_config=output_config
 )
 
-context.run(example_gen)
+examplegen_pipeline = pipeline.Pipeline(
+    pipeline_name="examplegen_test",
+    pipeline_root=PIPELINE_ROOT,
+    components=[example_gen],
+    metadata_connection_config=metadata.sqlite_metadata_connection_config(
+        METADATA_PATH
+    ),
+)
 
-artifacts = example_gen.outputs["examples"].get()
+LocalDagRunner().run(examplegen_pipeline)
 
 print("\n===== EXAMPLEGEN RESULTS =====")
 
-for artifact in artifacts:
-    print("Artifact URI:", artifact.uri)
-    print("Split names:", artifact.split_names)
-    print("Train URI:", os.path.join(artifact.uri, "Split-train"))
-    print("Eval URI:", os.path.join(artifact.uri, "Split-eval"))
+artifact_dirs = glob.glob(
+    os.path.join(PIPELINE_ROOT, "CsvExampleGen", "examples", "*")
+)
+if not artifact_dirs:
+    raise RuntimeError("ExampleGen completed without creating an artifact")
+
+artifact_uri = max(artifact_dirs, key=os.path.getmtime)
+print("Artifact URI:", artifact_uri)
+print("Split names: train, eval")
+print("Train URI:", os.path.join(artifact_uri, "Split-train"))
+print("Eval URI:", os.path.join(artifact_uri, "Split-eval"))
