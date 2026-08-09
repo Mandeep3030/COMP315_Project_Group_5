@@ -9,7 +9,7 @@ from tfx.proto import example_gen_pb2
 # Resolve paths relative to this file so renaming or moving the project is safe.
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_DIR, "data")
-PIPELINE_ROOT = os.path.join(PROJECT_DIR, "pipeline_output", "examplegen_test")
+PIPELINE_ROOT = os.path.join(PROJECT_DIR, "pipeline_output", "step1_examplegen_test")
 METADATA_PATH = os.path.join(PIPELINE_ROOT, "metadata.sqlite")
 
 output_config = example_gen_pb2.Output(

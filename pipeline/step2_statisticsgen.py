@@ -19,7 +19,7 @@ from tensorflow_metadata.proto.v0 import statistics_pb2
 # Resolve all paths from this file so the script works after moving the project.
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_DIR, "data")
-PIPELINE_ROOT = os.path.join(PROJECT_DIR, "pipeline_output", "statisticsgen_test")
+PIPELINE_ROOT = os.path.join(PROJECT_DIR, "pipeline_output", "step2_statisticsgen_test")
 METADATA_PATH = os.path.join(PIPELINE_ROOT, "metadata.sqlite")
 REPORT_PATH = os.path.join(PIPELINE_ROOT, "statistics_report.html")
 
