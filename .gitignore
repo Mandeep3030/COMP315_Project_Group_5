@@ -1,3 +1,9 @@
 .project/
 Project_ToDo.md
-pipeline_output
+pipeline_output/
+.airflow/
+metadata/*.sqlite
+serving_model/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
