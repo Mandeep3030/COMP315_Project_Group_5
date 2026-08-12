@@ -46,6 +46,11 @@ EVAL_STEPS = 100
 def create_eval_config():
     """Return the TFMA metrics, slices, and candidate blessing criteria."""
     accuracy_threshold = tfma.MetricThreshold(
+        # The absolute threshold handles the first run when no baseline exists.
+        value_threshold=tfma.GenericValueThreshold(
+            lower_bound=wrappers_pb2.DoubleValue(value=0.80),
+        ),
+        # Later candidates must also improve on the latest blessed baseline.
         change_threshold=tfma.GenericChangeThreshold(
             direction=tfma.MetricDirection.HIGHER_IS_BETTER,
             absolute=wrappers_pb2.DoubleValue(value=0.0001),
@@ -73,7 +78,14 @@ def create_eval_config():
                 metrics=[
                     tfma.MetricConfig(
                         class_name="BinaryAccuracy",
-                        threshold=accuracy_threshold,
+                        # Blessing criteria apply to aggregate performance.
+                        # Slice metrics remain visible for fairness analysis.
+                        per_slice_thresholds=[
+                            tfma.PerSliceMetricThreshold(
+                                slicing_specs=[tfma.SlicingSpec()],
+                                threshold=accuracy_threshold,
+                            )
+                        ],
                     ),
                     tfma.MetricConfig(class_name="AUC"),
                 ]
