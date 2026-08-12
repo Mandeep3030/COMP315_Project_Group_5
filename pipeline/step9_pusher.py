@@ -22,8 +22,12 @@ from tfx.orchestration import metadata, pipeline
 from tfx.orchestration.local.local_dag_runner import LocalDagRunner
 from tfx.proto import example_gen_pb2, pusher_pb2, trainer_pb2
 
-from step7_resolver import create_resolver
-from step8_evaluator import create_evaluator
+try:
+    from .step7_resolver import create_resolver
+    from .step8_evaluator import create_evaluator
+except ImportError:
+    from step7_resolver import create_resolver
+    from step8_evaluator import create_evaluator
 
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

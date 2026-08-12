@@ -25,7 +25,10 @@ from tfx.orchestration import metadata, pipeline
 from tfx.orchestration.local.local_dag_runner import LocalDagRunner
 from tfx.proto import example_gen_pb2, trainer_pb2
 
-from step7_resolver import create_resolver
+try:
+    from .step7_resolver import create_resolver
+except ImportError:
+    from step7_resolver import create_resolver
 
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -79,13 +82,15 @@ def create_eval_config():
     )
 
 
-def create_evaluator(examples, model, baseline_model):
+def create_evaluator(examples, model, baseline_model, eval_config=None):
     """Create Evaluator wired to examples, candidate, and resolved baseline."""
+    if eval_config is None:
+        eval_config = create_eval_config()
     return Evaluator(
         examples=examples,
         model=model,
         baseline_model=baseline_model,
-        eval_config=create_eval_config(),
+        eval_config=eval_config,
     )
 
 
