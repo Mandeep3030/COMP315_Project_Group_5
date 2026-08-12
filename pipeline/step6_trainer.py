@@ -162,6 +162,35 @@ def _serving_signature(model, tf_transform_output):
     return serve_tf_examples
 
 
+def _transformed_labels_signature(model, tf_transform_output):
+    """Create a TFMA preprocessing signature that returns a numeric label."""
+    model.tft_layer = tf_transform_output.transform_features_layer()
+    raw_feature_spec = tf_transform_output.raw_feature_spec()
+
+    @tf.function(
+        input_signature=[
+            tf.TensorSpec(
+                shape=[None], dtype=tf.string, name="examples"
+            )
+        ]
+    )
+    def transformed_labels(serialized_tf_examples):
+        raw_features = tf.io.parse_example(
+            serialized_tf_examples, raw_feature_spec
+        )
+        transformed_features = model.tft_layer(raw_features)
+        # Keep the raw label key in EvalConfig while replacing its string
+        # yes/no values with the numeric label created by Transform.
+        return {
+            LABEL_KEY: tf.cast(
+                transformed_features[transformed_name(LABEL_KEY)],
+                tf.float32,
+            )
+        }
+
+    return transformed_labels
+
+
 def run_fn(fn_args):
     """Train the model and export a SavedModel for serving."""
     tf_transform_output = tft.TFTransformOutput(fn_args.transform_output)
@@ -191,10 +220,16 @@ def run_fn(fn_args):
     )
 
     serving_signature = _serving_signature(model, tf_transform_output)
+    transformed_labels_signature = _transformed_labels_signature(
+        model, tf_transform_output
+    )
     model.save(
         fn_args.serving_model_dir,
         save_format="tf",
-        signatures={"serving_default": serving_signature},
+        signatures={
+            "serving_default": serving_signature,
+            "transformed_labels": transformed_labels_signature,
+        },
     )
 
 
