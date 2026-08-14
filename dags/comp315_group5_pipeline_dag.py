@@ -1,4 +1,12 @@
+# COMP_315 | SEC_401 | GROUP_5
+# Mandeep Singh | Dennis Kozevnikoff
+# =========
+
 """Apache Airflow DAG for the complete COMP315 Group 5 TFX pipeline."""
+
+# ===============
+# AIRFLOW DAG CONFIGURATION
+# ===============
 
 import datetime
 import os

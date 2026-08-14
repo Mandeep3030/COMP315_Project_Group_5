@@ -1,3 +1,13 @@
+# COMP_315 | SEC_401 | GROUP_5
+# Mandeep Singh | Dennis Kozevnikoff
+# =========
+
+"""TensorFlow Transform feature engineering used by Step 5."""
+
+# ===============
+# DATA PREPROCESSING
+# ===============
+
 import tensorflow as tf
 import tensorflow_transform as tft
 
