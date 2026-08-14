@@ -1,36 +1,17 @@
-"""Step 6: train and export a Keras model with the TFX Trainer.
+# COMP_315 | SEC_401 | GROUP_5
+# Mandeep Singh | Dennis Kozevnikoff
+# =========
 
-Run from the project root with the course Conda environment:
+"""Step 6 component: train and export the Keras classification model."""
 
-    conda run -n tfx-env python pipeline/step6_trainer.py
-
-This file serves two purposes: ``run_fn`` is loaded by the Trainer executor,
-while ``main`` creates a small local pipeline that tests training through Step 6.
-"""
-
-import glob
-import os
+# ===============
+# STEP 6: TRAINER
+# ===============
 
 import tensorflow as tf
 import tensorflow_transform as tft
-from tfx.components import (
-    CsvExampleGen,
-    SchemaGen,
-    StatisticsGen,
-    Trainer,
-    Transform,
-)
-from tfx.orchestration import metadata, pipeline
-from tfx.orchestration.local.local_dag_runner import LocalDagRunner
-from tfx.proto import example_gen_pb2, trainer_pb2
-
-
-PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(PROJECT_DIR, "data")
-PIPELINE_ROOT = os.path.join(PROJECT_DIR, "pipeline_output", "step6_trainer")
-METADATA_PATH = os.path.join(PIPELINE_ROOT, "metadata.sqlite")
-PREPROCESSING_MODULE = os.path.join(PROJECT_DIR, "pipeline", "preprocessing.py")
-TRAINER_MODULE = os.path.abspath(__file__)
+from tfx.components import Trainer
+from tfx.proto import trainer_pb2
 
 NUMERIC_FEATURES = [
     "age",
@@ -55,8 +36,6 @@ CATEGORICAL_FEATURES = [
 LABEL_KEY = "y"
 TRAIN_BATCH_SIZE = 64
 EVAL_BATCH_SIZE = 64
-TRAIN_STEPS = 500
-EVAL_STEPS = 100
 
 
 def transformed_name(key):
@@ -233,82 +212,20 @@ def run_fn(fn_args):
     )
 
 
-def latest_model_uri():
-    """Return the newest SavedModel artifact created by Trainer."""
-    artifact_dirs = glob.glob(
-        os.path.join(PIPELINE_ROOT, "Trainer", "model", "*")
+def create_trainer(
+    examples,
+    transform_graph,
+    schema,
+    trainer_module,
+    train_steps=500,
+    eval_steps=100,
+):
+    """Create Trainer with the transformed data and exported ``run_fn``."""
+    return Trainer(
+        module_file=trainer_module,
+        examples=examples,
+        transform_graph=transform_graph,
+        schema=schema,
+        train_args=trainer_pb2.TrainArgs(num_steps=train_steps),
+        eval_args=trainer_pb2.EvalArgs(num_steps=eval_steps),
     )
-    if not artifact_dirs:
-        raise RuntimeError("Trainer did not create a model artifact")
-    return max(artifact_dirs, key=os.path.getmtime)
-
-
-def main():
-    """Run the pipeline through Trainer and display the exported model URI."""
-    output_config = example_gen_pb2.Output(
-        split_config=example_gen_pb2.SplitConfig(
-            splits=[
-                example_gen_pb2.SplitConfig.Split(
-                    name="train", hash_buckets=2
-                ),
-                example_gen_pb2.SplitConfig.Split(
-                    name="eval", hash_buckets=1
-                ),
-            ]
-        )
-    )
-
-    example_gen = CsvExampleGen(
-        input_base=DATA_DIR,
-        output_config=output_config,
-    )
-    statistics_gen = StatisticsGen(
-        examples=example_gen.outputs["examples"],
-    )
-    schema_gen = SchemaGen(
-        statistics=statistics_gen.outputs["statistics"],
-        infer_feature_shape=False,
-    )
-    transform = Transform(
-        examples=example_gen.outputs["examples"],
-        schema=schema_gen.outputs["schema"],
-        module_file=PREPROCESSING_MODULE,
-    )
-
-    # Trainer consumes both Transform outputs, the inferred schema, and this
-    # module's run_fn. Step counts are explicitly part of its configuration.
-    trainer = Trainer(
-        module_file=TRAINER_MODULE,
-        examples=transform.outputs["transformed_examples"],
-        transform_graph=transform.outputs["transform_graph"],
-        schema=schema_gen.outputs["schema"],
-        train_args=trainer_pb2.TrainArgs(num_steps=TRAIN_STEPS),
-        eval_args=trainer_pb2.EvalArgs(num_steps=EVAL_STEPS),
-    )
-
-    trainer_pipeline = pipeline.Pipeline(
-        pipeline_name="step6_trainer",
-        pipeline_root=PIPELINE_ROOT,
-        components=[
-            example_gen,
-            statistics_gen,
-            schema_gen,
-            transform,
-            trainer,
-        ],
-        metadata_connection_config=metadata.sqlite_metadata_connection_config(
-            METADATA_PATH
-        ),
-    )
-    LocalDagRunner().run(trainer_pipeline)
-
-    print("\n===== TRAINER RESULTS =====")
-    print("Trainer module:", TRAINER_MODULE)
-    print("Train steps:", TRAIN_STEPS)
-    print("Eval steps:", EVAL_STEPS)
-    print("Model artifact URI:", latest_model_uri())
-    print("TRAINER COMPLETED SUCCESSFULLY: True")
-
-
-if __name__ == "__main__":
-    main()
